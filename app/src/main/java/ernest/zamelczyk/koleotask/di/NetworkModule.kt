@@ -10,7 +10,6 @@ import ernest.zamelczyk.koleotask.di.qualifiers.BaseUrl
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import retrofit2.Converter
 import retrofit2.Converter.Factory
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -35,7 +34,7 @@ class NetworkModule {
     @Named("json")
     fun provideConverterFactory(
         json: Json
-    ): Converter.Factory = json.asConverterFactory("application/json".toMediaType())
+    ): Factory = json.asConverterFactory("application/json".toMediaType())
 
     @Provides
     @Singleton

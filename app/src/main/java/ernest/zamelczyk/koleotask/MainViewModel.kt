@@ -3,12 +3,9 @@ package ernest.zamelczyk.koleotask
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import ernest.zamelczyk.koleotask.api.KoleoService
-import ernest.zamelczyk.koleotask.api.StationModel
 import ernest.zamelczyk.koleotask.data.StationsRepository
 import ernest.zamelczyk.koleotask.ui.components.StationItem
 import ernest.zamelczyk.koleotask.ui.screens.StationsState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
