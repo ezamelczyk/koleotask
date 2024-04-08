@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.sqldelight)
+    alias(libs.plugins.hilt)
+    kotlin("kapt")
 }
 
 android {
@@ -50,6 +53,18 @@ android {
     }
 }
 
+sqldelight {
+    databases {
+        create("StationsDb") {
+            packageName.set("ernest.zamelczyk.koleotask")
+        }
+    }
+}
+
+kapt {
+    correctErrorTypes = true
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -65,6 +80,10 @@ dependencies {
     implementation(libs.okhttp.okhttp)
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.sqldelight.android.driver)
+
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

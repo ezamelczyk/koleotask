@@ -4,14 +4,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Station(
-    @SerialName("id") val id: Int,
+data class StationModel(
+    @SerialName("id") val id: Long,
     @SerialName("name") val name: String,
     @SerialName("name_slug") val nameSlug: String,
     @SerialName("latitude") val latitude: Double?,
     @SerialName("longitude") val longitude: Double?,
-    @SerialName("hits") val hits: Int,
-    @SerialName("ibnr") val ibnr: Int?,
+    @SerialName("hits") val hits: Long,
+    @SerialName("ibnr") val ibnr: Long?,
     @SerialName("city") val city: String,
     @SerialName("region") val region: String,
     @SerialName("country") val country: String,

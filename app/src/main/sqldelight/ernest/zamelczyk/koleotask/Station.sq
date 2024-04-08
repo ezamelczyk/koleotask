@@ -1,0 +1,52 @@
+import kotlin.Boolean;
+
+CREATE TABLE station (
+        id INTEGER PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        name_slug TEXT  NOT NULL,
+        latitude REAL,
+        longitude REAL,
+        hits INTEGER,
+        ibnr INTEGER,
+        city TEXT,
+        region TEXT,
+        country TEXT,
+        localised_name TEXT,
+        is_group INTEGER AS Boolean,
+        has_announcements INTEGER AS Boolean,
+        is_nearby_station_enabled INTEGER AS Boolean
+);
+
+CREATE TABLE keyword (
+        id INTEGER PRIMARY KEY NOT NULL,
+        keyword TEXT NOT NULL,
+        station_id INTEGER NOT NULL,
+        FOREIGN KEY(station_id) REFERENCES station(id)
+);
+
+get:
+SELECT * FROM station;
+
+insertStation:
+INSERT INTO station
+VALUES ?;
+
+insertKeyword:
+INSERT INTO keyword
+VALUES ?;
+
+query:
+SELECT station.* FROM keyword LEFT JOIN station
+ON keyword.station_id = station.id
+WHERE keyword LIKE ('%' || :query || '%')
+AND station.id IS NOT NULL
+AND station.name IS NOT NULL
+AND station.name_slug IS NOT NULL
+ORDER BY hits;
+
+clearStations:
+DELETE FROM station;
+
+clearKeywords:
+DELETE FROM keyword;
+
