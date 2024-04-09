@@ -39,6 +39,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+        freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi," +
+                "kotlinx.coroutines.FlowPreview," +
+                "androidx.compose.material3.ExperimentalMaterial3Api," +
+                "androidx.compose.foundation.ExperimentalFoundationApi"
     }
     buildFeatures {
         compose = true
@@ -75,6 +79,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material3.icons.extended)
     implementation(libs.retrofit.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp.okhttp)

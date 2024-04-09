@@ -45,6 +45,10 @@ class StationsRepository @Inject constructor(
         database.stationQueries.query(query = query, mapper = ::Station).executeAsList()
     }
 
+    suspend fun getByIds(ids: Collection<Long>) = withContext(Dispatchers.IO) {
+        database.stationQueries.getByIds(ids).executeAsList()
+    }
+
     private fun replaceStationsInDatabase(stations: List<ernest.zamelczyk.koleotask.api.StationModel>) {
         database.stationQueries.transaction {
             database.stationQueries.clearStations()

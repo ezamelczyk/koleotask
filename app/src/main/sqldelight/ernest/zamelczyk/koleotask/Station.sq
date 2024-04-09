@@ -25,7 +25,10 @@ CREATE TABLE keyword (
 );
 
 get:
-SELECT * FROM station;
+SELECT * FROM station ORDER BY hits DESC;
+
+getByIds:
+SELECT * FROM station WHERE id IN :ids ORDER BY hits DESC;
 
 insertStation:
 INSERT INTO station
@@ -36,13 +39,13 @@ INSERT INTO keyword
 VALUES ?;
 
 query:
-SELECT station.* FROM keyword LEFT JOIN station
+SELECT DISTINCT station.* FROM keyword LEFT JOIN station
 ON keyword.station_id = station.id
 WHERE keyword LIKE ('%' || :query || '%')
 AND station.id IS NOT NULL
 AND station.name IS NOT NULL
 AND station.name_slug IS NOT NULL
-ORDER BY hits;
+ORDER BY hits DESC ;
 
 clearStations:
 DELETE FROM station;
