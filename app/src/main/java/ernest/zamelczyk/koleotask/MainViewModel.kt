@@ -12,126 +12,108 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class DistanceInfoCardState(
-    val homeName: String,
-    val destinationName: String,
-    val distance: String
-)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val stationsRepository: StationsRepository
 ) : ViewModel() {
 
-    private val queryState = MutableStateFlow("")
-    private val selectionState = MutableStateFlow(emptySet<Long>())
+    private val homeStation = MutableStateFlow<Station?>(null)
+    private val destinationStation = MutableStateFlow<Station?>(null)
+    private val _homeState = MutableStateFlow("")
+    private val _destinationState = MutableStateFlow("")
 
-    val query: StateFlow<String> = queryState.asStateFlow()
-    val stations: StateFlow<List<StationItem>> = flow { emit(stationsRepository.getStations()) }
-        .flatMapLatest { stations -> selectionState.map { stations.toStationItems(it) } }
+    val homeState = _homeState.asStateFlow()
+    val destinationState = _destinationState.asStateFlow()
+    val distanceState = combine(homeStation, destinationStation, ::calculateDistance)
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "0 km")
+    val homeSearchResults: StateFlow<List<StationItem>> = homeState
+        .mapLatest(::mapQueryToItems)
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val searchResults: StateFlow<List<StationItem>> = queryState
-        .combine(selectionState, ::mapQueryToState)
+    val destinationSearchResults: StateFlow<List<StationItem>> = destinationState
+        .mapLatest(::mapQueryToItems)
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val distanceInfoCardState = selectionState
-        .mapLatest(::mapToDistanceInfoCardState)
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, DistanceInfoCardState("", "", ""))
 
-    fun onQueryChanged(query: String) {
-        queryState.value = query
-    }
 
-    fun itemCheckedChange(id: Long, checked: Boolean) {
-        selectionState.update { state ->
-            when {
-                checked && state.size < 2 -> state + id
-                !checked && state.contains(id) -> state - id
-                else -> state
-            }
+    fun fetchStations() {
+        viewModelScope.launch {
+            stationsRepository.getStations()
         }
     }
 
-    fun onRemoveHome() {
-        selectionState.update { state ->
-            state - state.first()
+    fun onHomeSelected(id: Long) {
+        viewModelScope.launch {
+            val station = stationsRepository.getById(id)
+            homeStation.emit(station)
+            _homeState.emit(station.name)
         }
     }
 
-    fun onRemoveDestination() {
-        selectionState.update { state ->
-            state - state.last()
+    fun onDestinationSelected(id: Long) {
+        viewModelScope.launch {
+            val station = stationsRepository.getById(id)
+            destinationStation.emit(station)
+            _destinationState.emit(station.name)
         }
     }
 
-    private suspend fun mapToDistanceInfoCardState(selectedIds: Set<Long>): DistanceInfoCardState {
-        val stations = stationsRepository.getByIds(selectedIds)
-        val home = stations.getOrNull(0)
-        val destination = stations.getOrNull(1)
-        val distance =
-            if (home?.latitude != null && home.longitude != null && destination?.latitude != null && destination.longitude != null) {
-                val resultsArray = FloatArray(1)
-                distanceBetween(
-                    home.latitude,
-                    home.longitude,
-                    destination.latitude,
-                    destination.longitude,
-                    resultsArray
-                )
-                String.format("%.2f km", resultsArray.first() / 1000f)
-            } else "0 km"
-        return DistanceInfoCardState(
-            homeName = home?.name.orEmpty(),
-            destinationName = destination?.name.orEmpty(),
-            distance = distance
-        )
+    fun onHomeChanged(value: String) {
+        _homeState.value = value
     }
 
-    private suspend fun mapQueryToState(
-        query: String,
-        selectionState: Set<Long>
-    ): List<StationItem> {
-        return stationsRepository.query(query).toStationItems(selectionState)
+    fun onHomeCleared() {
+        _homeState.value = ""
+        homeStation.value = null
     }
 
-    private fun List<Station>.toStationItems(
-        selectedItemsSet: Set<Long>
-    ): List<StationItem> {
-        val selectedItems = mutableListOf<StationItem>()
-        val mapped = mapNotNull {
-            if (selectedItemsSet.contains(it.id)) {
-                selectedItems.add(
-                    StationItem(
-                        id = it.id,
-                        name = it.name,
-                        city = it.city.orEmpty(),
-                        selected = true,
-                        selectable = true
-                    )
-                )
-                null
-            } else {
-                StationItem(
-                    id = it.id,
-                    name = it.name,
-                    city = it.city.orEmpty(),
-                    selected = false,
-                    selectable = selectedItemsSet.size < 2
-                )
-            }
+    fun onDestinationChanged(value: String) {
+        _destinationState.value = value
+    }
+
+    fun onDestinationCleared() {
+        _destinationState.value = ""
+        destinationStation.value = null
+    }
+
+    private suspend fun mapQueryToItems(query: String): List<StationItem> {
+        return stationsRepository.query(query).toStationItems()
+    }
+
+    private fun calculateDistance(home: Station?, destination: Station?): String {
+        return if (
+            home?.latitude != null &&
+            home.longitude != null &&
+            destination?.latitude != null &&
+            destination.longitude != null
+        ) {
+            val resultsArray = FloatArray(1)
+            distanceBetween(
+                home.latitude,
+                home.longitude,
+                destination.latitude,
+                destination.longitude,
+                resultsArray
+            )
+            String.format("%.2f km", resultsArray.first() / 1000f)
+        } else "0 km"
+    }
+
+    private fun List<Station>.toStationItems(): List<StationItem> {
+        return map {
+            StationItem(
+                id = it.id,
+                name = it.name,
+                city = it.city.orEmpty()
+            )
         }
-        return selectedItems + mapped
     }
 
 }

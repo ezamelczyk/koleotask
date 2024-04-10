@@ -27,8 +27,8 @@ CREATE TABLE keyword (
 get:
 SELECT * FROM station ORDER BY hits DESC;
 
-getByIds:
-SELECT * FROM station WHERE id IN :ids ORDER BY hits DESC;
+getById:
+SELECT * FROM station WHERE id = :id;
 
 insertStation:
 INSERT INTO station

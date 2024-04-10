@@ -45,8 +45,8 @@ class StationsRepository @Inject constructor(
         database.stationQueries.query(query = query, mapper = ::Station).executeAsList()
     }
 
-    suspend fun getByIds(ids: Collection<Long>) = withContext(Dispatchers.IO) {
-        database.stationQueries.getByIds(ids).executeAsList()
+    suspend fun getById(id: Long) = withContext(Dispatchers.IO) {
+        database.stationQueries.getById(id).executeAsOne()
     }
 
     private fun replaceStationsInDatabase(stations: List<ernest.zamelczyk.koleotask.api.StationModel>) {
